@@ -14,7 +14,6 @@ export const employeeRequest = async (req: IncomingMessage) => {
 
         switch (req.method) {
             case 'POST':
-                console.log(req.method)
                 const postresult = await getJSONDataFromRequestStream(req) as { hourlySalary: number, empType: string, accID: string, compID: string}
                 const postmodel = new employee(postresult);
                 if(await postmodel.checkEmp() === "Already exist"){

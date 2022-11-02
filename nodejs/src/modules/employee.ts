@@ -69,12 +69,13 @@ export default class employee {
   }
   public async checkEmp() {
     try {
+      console.log(this.data.accID)
       const result = await selectDB(this.__TABLE__, `accID = '${this.data.accID}'`)
       if (result.length === 0) {
         return 'Not found'
       }
       else {
-        this.data = { ...this.data, ...result[0] }
+        //this.data = { ...this.data, ...result[0] }
         return 'Already exist'
       }
     } catch (err) {
@@ -217,6 +218,7 @@ export default class employee {
     _.forEach(this.data.absences, (data, index) => {
       if (isSameMonth(addDays(new Date(month), 1), addDays(new Date(JSON.stringify(this.data.absences?.[index].date_started).replace(/['"`]+/g, '')), 1) && addDays(new Date(JSON.stringify(this.data.absences?.[index].date_ended).replace(/['"`]+/g, '')), 1))) {
         absences += Number(differenceInDays(addDays(new Date(JSON.stringify(this.data.absences?.[index].date_ended).replace(/['"`]+/g, '')), 1), addDays(new Date(JSON.stringify(this.data.absences?.[index].date_started).replace(/['"`]+/g, '')), 1)))
+
       }
     })
     let leaves: number = 0;
@@ -231,7 +233,7 @@ export default class employee {
   public async computeTotOvertime(month: string, allowOT: number): Promise<number> {
     let overtime: number = 0;
     _.forEach(this.data.overtimes, (date, index) => {
-      if (isSameMonth(addDays(new Date(JSON.stringify(this.data.overtimes?.[index].date_and_time_started).replace(/['"`]+/g, '')), 1) && addDays(new Date(JSON.stringify(this.data.overtimes?.[index].date_and_time_ended).replace(/['"`]+/g, '')), 1), new Date(month))) {
+      if (isSameMonth(addDays(new Date(JSON.stringify(this.data.overtimes?.[index].date_and_time_started).replace(/['"`]+/g, '')), 1) && addDays(new Date(JSON.stringify(this.data.overtimes?.[index].date_and_time_ended).replace(/['"`]+/g, '')), 1), addDays(new Date(month), 1))) {
         overtime += differenceInMinutes(addDays(new Date(JSON.stringify(this.data.overtimes?.[index].date_and_time_ended).replace(/['"`]+/g, '')), 1), addDays(new Date(JSON.stringify(this.data.overtimes?.[index].date_and_time_started).replace(/['"`]+/g, '')), 1)) / 60;
       }
     })

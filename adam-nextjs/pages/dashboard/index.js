@@ -13,9 +13,13 @@ export default function redirectPage() {
     // const adminPage = router.query.role=== 'Admin'? <Admin/>: '';
     // const employeePage = router.query.role=== 'Employee'? <Employee/>: '';
 
-    if(router.query.role === 'Admin') return <Admin/>
+    if(router.query.role === 'Admin') {
+        return <Admin />;
+    }
 
-    if(router.query.role === 'Employee') return <Employee/>
+    if(router.query.role === 'Employee'){ 
+        return <Employee/>;
+    }
 
     //const employerPage = router.query.role === ''? <Employer/>: '';
 

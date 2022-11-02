@@ -91,7 +91,6 @@ export const employeeStore = createSlice({
                daily_wage: 0,
                monthy_salary: 0,
             }
-            console.log(array)
             state.employeeData.push(array);
             state.account_id = '';
             state.employment_type = '';
@@ -127,8 +126,6 @@ export const employeeStore = createSlice({
         addLeaves: (state, action) =>{
             const {account_id, leaveArray} = action.payload;
             const index = _.findIndex(state.employeeData, ['account_id', parseInt(account_id)]);
-            console.log(index);
-            console.log(leaveArray);
             if (index !== -1) {
                 state.employeeData[index].leaves.push(leaveArray);
             }
@@ -136,8 +133,6 @@ export const employeeStore = createSlice({
         addOvertimes: (state, action) =>{
             const {account_id, overtimeArray} = action.payload;
             const index = _.findIndex(state.employeeData, ['account_id', parseInt(account_id)]);
-            console.log(index);
-            console.log(overtimeArray);
             if (index !== -1) {
                 state.employeeData[index].overtime.push(overtimeArray);
             }
@@ -145,8 +140,6 @@ export const employeeStore = createSlice({
         addAbsences: (state, action) =>{
             const {account_id, absenceArray} = action.payload;
             const index = _.findIndex(state.employeeData, ['account_id', parseInt(account_id)]);
-            console.log(index);
-            console.log(absenceArray);
             if (index !== -1) {
                 state.employeeData[index].absence.push(absenceArray);
             }
@@ -167,17 +160,14 @@ export const employeeStore = createSlice({
             if(companies.account_id.length>0){
                 _.map(companies.account_id, (value, index)=>{
                     empIndex =_.findIndex(state.employeeData, ['account_id', parseInt(value)])
-                    console.log(empIndex);
                     if (empIndex !== -1) {
                             //Array for holding same months of leave date_started and leave date_ended
                            const sameMonth = [];
                             _.forEach(state.employeeData[empIndex].leaves, function (empValue) {
                                 if (isSameMonth(date, parse(empValue.date_started, 'MM/dd/yyyy', new Date()))) {
-                                    console.log(empValue.date_and_time_started);
                                     sameMonth.push(empValue.date_started);
                                 }
                             })
-                            console.log(sameMonth);
                             compute = companies.leaves - sameMonth.length;
                             result = compute > 0 ? compute : 0;
 
@@ -221,8 +211,6 @@ export const employeeStore = createSlice({
                                         sameMonthLeave.push(empValue.date_ended);
                                     }
                                 })
-                            console.log(sameMonthAbsence.length);
-                            console.log(sameMonthLeave.length);
 
                             computeLeaves = sameMonthLeave.length - companies.leaves;
 
@@ -269,7 +257,6 @@ export const employeeStore = createSlice({
                             _.forEach(sameMonthOvertimeStart, (value, index)=>{
                                 totalOvertime+=differenceInHours(parse(sameMonthOvertimeEnd[index], 'MM/dd/yyyy hh:mm:ss a', new Date()), parse(sameMonthOvertimeStart[index], 'MM/dd/yyyy hh:mm:ss a', new Date()));
                             })
-                            console.log(totalOvertime)
                             //compute = companies.overtime_limit - totalOvertime;
     
                             result = totalOvertime > companies.overtime_limit ? companies.overtime_limit: totalOvertime;

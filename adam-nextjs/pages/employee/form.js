@@ -7,33 +7,56 @@ import { setEmploymentType, setFirstName, setLastName, setAssociateCompany, setS
 import { setAccountPassword, setType, addAccount, setAccountFirstName, setAccountLastName,  setAccountEmail, setAccountAssociatedCompany } from '../../store/reducers/account';
 import _ from 'lodash';
 import { addAccount_id } from '../../store/reducers/company';
+import Axios from "axios";
 
 export default function AddEmployee() {
-    const [seconds, setSeconds] = useState(3);
-    const router = useRouter();
-    const [emailalert, setShowEmailAlert] = useState(false);
-    const [fullnamealert, setShowFullNameAlert] = useState(false);
+    const [empData, setEmpData] = useState(JSON.parse(localStorage.getItem("employees")));
+    const [seconds, setSeconds] = useState(5);
+
+    //const router = useRouter();
+    // const [emailalert, setShowEmailAlert] = useState(false);
+    // const [fullnamealert, setShowFullNameAlert] = useState(false);
+
+    //Show error message that either email or password is incorrect
+    const [accountAlert, setShowAccountAlert] = useState(false);
+
+    //Show error message from post login request
+    const [errorAlert, setShowErrorAlert] = useState(false);
+
+    const [error, setError] = useState('');
+
     const [info, setShowInfo] = useState(false);
 
     const [addEmployeeClicked, setAddEmployeeClicked] = useState(false);
 
-    const employees = useSelector(state => state.employee);
-    const accounts = useSelector(state => state.account);
-    const logins = useSelector(state=> state.login);
-    const companies = useSelector(state => state.company);
-    const [company, setCompany] = useState([]);
-    const employment_type = ['Fulltime-Employee', 'Parttime-Employee'];
+    const [fname, setFname] = useState('');
+    const [lname, setLname] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [hourlySalary, setHourlySalary] = useState('');
+    const [role, setRole] = useState('');
+    
+    const accountData = JSON.parse(localStorage.getItem("account"));
+    const compID = accountData.compID;
+    // const employees = useSelector(state => state.employee);
+    // const accounts = useSelector(state => state.account);
+    // const logins = useSelector(state=> state.login);
+    // const companies = useSelector(state => state.company);
+    // const [company, setCompany] = useState([]);
+    const employment_type = ['Fulltime', 'Parttime'];
     const dispatch = useDispatch();
 
     useEffect(() => {
-        if (emailalert === true || fullnamealert === true || info === true) {
+        if (accountAlert === true || errorAlert === true || info === true) {
             if (seconds > 0) {
                 setTimeout(() => setSeconds(seconds - 1), 1000);
             } else {
-                setShowEmailAlert(false);
-                setShowFullNameAlert(false);
+                // setShowEmailAlert(false);
+                // setShowFullNameAlert(false);
+                setShowAccountAlert(false);
+                setShowErrorAlert(false);
                 setShowInfo(false);
-                setSeconds(3);
+                setSeconds(5);
             }
         }
 
@@ -46,81 +69,151 @@ export default function AddEmployee() {
         //     setCompany(newData);
         // }
 
-        const employeeFilter = _.filter(employees.employeeData, function (value) {
-            return value;
-        });
-        const accountFilter = _.filter(accounts.accountData, function (value) {
-            return value;
-        });
+        // const employeeFilter = _.filter(empData, function (value) {
+        //     return value;
+        // });
 
-        _.map(employeeFilter, (value, index) => {
-            if (employeeFilter[index] !== undefined) {
-                if (employeeFilter[index].firstname + employeeFilter[index].lastname === employees.firstname + employees.lastname) {
-                    setShowFullNameAlert(true);
-                }
-            }
-        });
+        // _.map(employeeFilter, (value, index) => {
+        //     if (employeeFilter[index] !== undefined) {
+        //         if (employeeFilter[index].fname + employeeFilter[index].lname === fname + lname) {
+        //             setShowFullNameAlert(true);
+        //         }
+        //         if(employeeFilter[index].email === email){
+        //             setShowEmailAlert(true);
+        //         }
+        //     }
+        // });
 
-        _.map(accountFilter, (value, index)=>{
-            if (accountFilter[index] !== undefined) {
-                if(accountFilter[index].type === 'Employee'){
-                    if (accountFilter[index].email === accounts.email) {
-                        setShowEmailAlert(true);
-                    }
-                    if (accountFilter[index].firstname + accountFilter[index].lastname === employees.firstname + employees.lastname) {
-                        setShowFullNameAlert(true);
-                    }
-                }
-            }
-        });
 
-        if(addEmployeeClicked){
-            if (!emailalert && !fullnamealert) {
+        // if(addEmployeeClicked){
+        //     if (!emailalert && !fullnamealert) {
             
-                dispatch(setEmploymentType(employees.employment_type));
-                dispatch(setAccountAssociatedCompany(accounts.accountData[_.findIndex(accounts.accountData, ['email' ,logins.loginData[0].email])].associated_company));
-                dispatch(setType('Employee'));
-                dispatch(setAccountFirstName(employees.firstname));
-                dispatch(setAccountLastName(employees.lastname));
-                const accountLength = accounts.accountData.length;
-                const accountID = accounts.accountData[accountLength - 1].account_id + 1;
-                const getAccountIndex = _.findIndex(accounts.accountData, ['email', logins.loginData[0].email]);
-                const getCompanyIndex = _.findIndex(companies.companyData, ['name', accounts.accountData[getAccountIndex].associated_company]);
-                dispatch(addAccount());
-                dispatch(addAccount_id({index:getCompanyIndex, id:accountID}));
-                dispatch(addEmployee(accountID));
-                setShowInfo(true);
+        //         dispatch(setEmploymentType(employees.employment_type));
+        //         dispatch(setAccountAssociatedCompany(accounts.accountData[_.findIndex(accounts.accountData, ['email' ,logins.loginData[0].email])].associated_company));
+        //         dispatch(setType('Employee'));
+        //         dispatch(setAccountFirstName(employees.firstname));
+        //         dispatch(setAccountLastName(employees.lastname));
+        //         const accountLength = accounts.accountData.length;
+        //         const accountID = accounts.accountData[accountLength - 1].account_id + 1;
+        //         const getAccountIndex = _.findIndex(accounts.accountData, ['email', logins.loginData[0].email]);
+        //         const getCompanyIndex = _.findIndex(companies.companyData, ['name', accounts.accountData[getAccountIndex].associated_company]);
+        //         dispatch(addAccount());
+        //         dispatch(addAccount_id({index:getCompanyIndex, id:accountID}));
+        //         dispatch(addEmployee(accountID));
+        //         setShowInfo(true);
     
-                // dispatch(setFirstName(''));
-                // dispatch(setLastName(''));
-                // dispatch(setAccountEmail(''));
-                // dispatch(setAccountPassword(''));
-                // dispatch(setSalaryPerHour(''));
-                // dispatch(setEmploymentType(''));
-                // console.log(accountID);
-                // console.log(companies.companyData[getCompanyIndex].account_id);
-            }
-            setAddEmployeeClicked(false);
-        }
+        //         // dispatch(setFirstName(''));
+        //         // dispatch(setLastName(''));
+        //         // dispatch(setAccountEmail(''));
+        //         // dispatch(setAccountPassword(''));
+        //         // dispatch(setSalaryPerHour(''));
+        //         // dispatch(setEmploymentType(''));
+        //         // console.log(accountID);
+        //         // console.log(companies.companyData[getCompanyIndex].account_id);
+        //     }
+        //     setAddEmployeeClicked(false);
+        // }
         // console.log(seconds);
         // console.log(alert);
         // console.log(info);
-    }, [seconds, emailalert, fullnamealert, info, addEmployeeClicked]);
+    }, [seconds, accountAlert, errorAlert, info, addEmployeeClicked]);
 
     let id = employee[employee.length - 1].empID;
 
-    function handleaddEmployee(event) {
+    async function handleaddEmployee(event) {
         event.preventDefault();
-        setAddEmployeeClicked(true);
+        let accountData;
+        let employeeData;
+
+        try{
+            let profPayload = {
+                fname: fname,
+                lname: lname,
+                email: email,
+                password: password,
+                role: "Employee"
+            }
+            
+            await Axios("http://localhost:8080/account/", {
+                method: "POST",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
+                },
+                data: JSON.stringify(profPayload)
+            }).then(function (response) {
+                if (response.data === 'An account with the same name or email already exists!') {
+                    setAccountAlert(true);
+                    setShowInfo(false);
+                    return;
+                } else {
+                    setAccountAlert(false);
+                    setShowInfo(true);
+                }
+            }).finally(async () => {
+                await Axios("http://localhost:8080/account/", {
+                    method: "GET",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
+                    }
+                }).then(function (response) {
+                    accountData = _.filter(response.data, (data) => data.role === "Employee");
+                }).then(() => {
+                    const accountIndex = accountData.length - 1;
+                    _.map(accountData,  async (data, index) => {
+                        let empPayload = {
+                            hourlySalary: hourlySalary,
+                            empType: role,
+                            accID: await accountData[accountIndex].accID,
+                            compID: compID
+                        };
+
+                        await Axios("http://localhost:8080/employee/", {
+                            method: "POST",
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
+                            },
+                            data: JSON.stringify(empPayload)
+                        }).then(function (empResponse) {
+                            if(empResponse.data === "That account ID is already registered as an employee"){
+                                setError("Employee is already registered!");
+                                setShowErrorAlert(true);
+                            }else{
+                                setShowAccountAlert(false);
+                                setShowInfo(true);
+                                setFname('');
+                                setLname('');
+                                setEmail('');
+                                setPassword('');
+                                setHourlySalary('');
+                                setRole('');
+                            }
+                        }).finally(async () => {
+                            await Axios("http://localhost:8080/employee/", {
+                                method: "GET",
+                                headers: {
+                                    'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
+                                }
+                            }).then(function(response){
+                                employeeData = response.data;
+
+                                const merged = _(employeeData).keyBy('accID').merge(_.keyBy(accountData, 'accID')).values().value();
+                                console.log(employeeData, accountData);
+                                console.log(merged);
+                                localStorage.setItem("employees", JSON.stringify(merged));
+                            })
+                        })
+                    })
+                })
+            })
+        }catch(err){
+            setError(error);
+            setShowErrorAlert(true);
+        }
+        //setAddEmployeeClicked(true);
     }
 
     function checkData() {
-        // console.log(employees.addEmployeeData);
-        // console.log(employees.employeeData[0].firstname + employees.employeeData[0].lastname)
-        // console.log(company)
-        console.log(employees.employeeData);
-        console.log(companies.companyData);
-        console.log(accounts.accountData);
+        
     }
 
 
@@ -132,7 +225,19 @@ export default function AddEmployee() {
                         Employee has been successfully added!
                     </Alert>
                 </Collapse>
-                <Collapse in={emailalert}>
+                <Collapse in={accountAlert}>
+                    <Alert severity="error" visible="false">
+                        <AlertTitle>Error</AlertTitle>
+                        Error: An account with the same name or email already exists!
+                    </Alert>
+                </Collapse>
+                <Collapse in={errorAlert}>
+                    <Alert severity="error" visible="false">
+                        <AlertTitle>Error</AlertTitle>
+                        Error: {error}
+                    </Alert>
+                </Collapse>
+                {/* <Collapse in={emailalert}>
                     <Alert severity="error" visible="false">
                         <AlertTitle>Error</AlertTitle>
                         This email is already taken. Please use a different one!
@@ -143,17 +248,17 @@ export default function AddEmployee() {
                         <AlertTitle>Error</AlertTitle>
                         Another employee with the same full name already exists. Please use a different one!
                     </Alert>
-                </Collapse>
+                </Collapse> */}
             <form onSubmit={handleaddEmployee}>
                 <Grid container alignItems="center" direction="column" sx={{ mt: 2, p: 2, border: 2 }} maxWidth="md" spacing={2}>
                     <Typography>Add Employee Form</Typography>
-                    <Grid item>Enter First Name: <Input required value={employees.firstname} onChange={(event) => dispatch(setFirstName(event.target.value))} sx={{ ml: 4 }} ></Input></Grid>
-                    <Grid item>Enter Last Name: <Input required value={employees.lastname} onChange={(event) => dispatch(setLastName(event.target.value))} sx={{ ml: 4 }}></Input></Grid>
-                    <Grid item>Enter Email: <Input required value={accounts.email} onChange={(event) => dispatch(setAccountEmail(event.target.value))} sx={{ ml: 9 }}></Input></Grid>
-                    <Grid item>Enter Password: <Input required type="password" value={accounts.password} onChange={(event) => dispatch(setAccountPassword(event.target.value))} sx={{ ml: 5 }}></Input></Grid>
-                    <Grid item>Enter Hourly Salary: <Input required value={employees.salary_per_hour} onChange={(event) => dispatch(setSalaryPerHour(event.target.value))} sx={{ ml: 2 }}></Input></Grid>
+                    <Grid item>Enter First Name: <Input required value={fname} onChange={(event) => setFname(event.target.value)} sx={{ ml: 4 }} ></Input></Grid>
+                    <Grid item>Enter Last Name: <Input required value={lname} onChange={(event) => setLname(event.target.value)} sx={{ ml: 4 }}></Input></Grid>
+                    <Grid item>Enter Email: <Input required value={email} onChange={(event) => setEmail(event.target.value)} sx={{ ml: 9 }}></Input></Grid>
+                    <Grid item>Enter Password: <Input required type="password" value={password} onChange={(event) => setPassword(event.target.value)} sx={{ ml: 5 }}></Input></Grid>
+                    <Grid item>Enter Hourly Salary: <Input required value={hourlySalary} onChange={(event) => setHourlySalary(event.target.value)} sx={{ ml: 2 }}></Input></Grid>
                     <Grid item>Select Employment Type:</Grid>
-                    <Select required value={employees.employment_type} onChange={(event) => dispatch(setEmploymentType(event.target.value))}>
+                    <Select required value={role} onChange={(event) => setRole(event.target.value)}>
                         {_.map(employment_type, (value, index) =>
                             <MenuItem key={index} value={value}>{value}</MenuItem>
                         )}

@@ -20,14 +20,102 @@ import { DatePicker, TimePicker } from '@mui/x-date-pickers';
 import {format, isBefore, isSameSecond, isSameMinute, isSameHour, isSameDay, isEqual, parseISO, parse} from 'date-fns';
 import { setLeaveAccountID, setLeaveReason, setLeaveDateStarted, setLeaveDateEnded, requestLeave, deleteLeave, updateLeave, confirmLeave, afteConfirmLeave, denyLeave } from '../../store/reducers/leave';
 import { setOvertimeAccountID, setOvertimeDateStarted, setOvertimeDateEnded, requestOvertime, deleteOvertime, updateOvertime, confirmOvertime, afteConfirmOvertime, denyOvertime } from '../../store/reducers/overtime';
+import Axios from "axios";
 
 export default function Employer() {
-    const dispatch = useDispatch();
-    const employees = useSelector(state => state.employee);
-    const companies = useSelector(state => state.company);
-    const accounts = useSelector(state=>state.account);
-    const logins = useSelector(state => state.login);
-    const leaves = useSelector(state=>state.leave);
+    //const dispatch = useDispatch();
+
+    const [empData, setEmpData] = useState(JSON.parse(localStorage.getItem("empData")));
+
+    let empID;
+    _.map(empData, (data)=>{
+        empID = data.empID
+    })
+
+    const accountData = JSON.parse(localStorage.getItem("account"));
+    //const [accountData, setAccountData] = useState(JSON.parse(localStorage.getItem("account")));
+
+    const [leaveReason, setLeaveReason] = useState('');
+
+    async function getLeaves(){
+
+        try {
+            await _.map(empData, async (mergeData, index) => {
+                const baseUrl = "http://localhost:8080/employee/leaves/";
+                let finalUrl = baseUrl + empData[index].empID;
+                const month = format(new Date(), "MM/dd/yyyy");
+    
+                await Axios(finalUrl, {
+                    method: "POST",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
+                    },
+                    data: {
+                        "month": JSON.stringify(month)
+                    }
+                }).then(function (response) {
+                    empData[index].total_leaves = response.data;
+                    setEmpData(empData)
+                });
+            })
+        } catch (err) {
+            console.log(err);
+        }
+    }
+    async function getAbsences(){
+
+        try {
+            await _.map(empData, async (mergeData, index) => {
+                const baseUrl = "http://localhost:8080/employee/absences/";
+                let finalUrl = baseUrl + empData[index].empID;
+                const month = format(new Date(), "MM/dd/yyyy");
+    
+                await Axios(finalUrl, {
+                    method: "POST",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
+                    },
+                    data: {
+                        "month": JSON.stringify(month)
+                    }
+                }).then(function (response) {
+                    empData[index].total_absences = response.data;
+                    setEmpData(empData)
+                });
+            })
+        } catch (err) {
+            console.log(err);
+        }
+    }
+    async function getOvertimes(){
+
+        try {
+            await _.map(empData, async (mergeData, index) => {
+                const baseUrl = "http://localhost:8080/employee/overtimes/";
+                let finalUrl = baseUrl + empData[index].empID;
+                const month = format(new Date(), "MM/dd/yyyy HH:mm:ss a");
+    
+                await Axios(finalUrl, {
+                    method: "POST",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
+                    },
+                    data: {
+                        "month": JSON.stringify(month)
+                    }
+                }).then(function (response) {
+                    empData[index].total_overtimes = response.data;
+                    setEmpData(empData)
+                });
+            })
+        } catch (err) {
+            console.log(err);
+        }
+    }
+    getLeaves();
+    getAbsences();
+    getOvertimes();
+
     const [value, setValue] = useState();
     const router = useRouter();
     const [openLeave, setLeaveOpen] = useState(false);
@@ -50,9 +138,10 @@ export default function Employer() {
 
     const handleClose = () => 
     {
-        dispatch(setLeaveReason(''));
+        setLeaveReason('');
         setLeaveOpen(false);
         setOvertimeOpen(false);
+        setShowSameDayAlert(false);
         setShowBeforeDayAlert(false);
         setShowIncorrectTimeAlert(false);
         setDTLeaveStart(format(new Date(), 'MM/dd/yyy'));
@@ -61,8 +150,8 @@ export default function Employer() {
         setDTOvertimeEnd(new Date());
     };
 
-    const id = logins.loginData.length>0?logins.loginData[0].account_id: '';
-    const companyList = [];
+    // const id = logins.loginData.length>0?logins.loginData[0].account_id: '';
+    // const companyList = [];
 
     let associated_comp;
 
@@ -92,73 +181,124 @@ export default function Employer() {
     const [profileData , setProfileData] = useState([]);
 
     useEffect(() =>{
-        if (profileData.length !== employees.employeeData.length) {
-            const newData = employees.employeeData.map((data, index) => {
-                return (profileData[index]) ? { ...data, ...profileData[index] } : data;
-            })
-            setProfileData(newData);
-        }
+        getLeaves();
+        getAbsences();
+        getOvertimes();
+        // if (profileData.length !== employees.employeeData.length) {
+        //     const newData = employees.employeeData.map((data, index) => {
+        //         return (profileData[index]) ? { ...data, ...profileData[index] } : data;
+        //     })
+        //     setProfileData(newData);
+        // }
         
-        _.forEach(companies.companyData, function(value){
-            companyList.push(value);
-        })
+        // _.forEach(companies.companyData, function(value){
+        //     companyList.push(value);
+        // })
 
-        _.forEach(companyList, function(value){
-            dispatch(computeLeaves(value));
-        })
+        // _.forEach(companyList, function(value){
+        //     dispatch(computeLeaves(value));
+        // })
 
-        _.forEach(companyList, function(value){
-            dispatch(computeAbsences(value));
-        })
+        // _.forEach(companyList, function(value){
+        //     dispatch(computeAbsences(value));
+        // })
 
-        const formattedLeaveStart = parse(dtLeaveStart, 'MM/dd/yyyy', new Date());
-        const formattedLeaveEnd  = parse(dtLeaveEnd, 'MM/dd/yyyy', new Date());
+        const leaveSend = async() =>{
+            try{
 
-        if(leaveClicked){
-            if(isBefore(formattedLeaveEnd, formattedLeaveStart )){
-                setShowBeforeDayAlert(true);
-                setLeaveClicked(false);
-            }
-            else{
-                dispatch(setLeaveDateStarted(dtLeaveStart));
-                dispatch(setLeaveDateEnded(dtLeaveEnd));
-                dispatch(requestLeave(id));
-                setShowBeforeDayAlert(false);
-                setLeaveClicked(false);
-                setLeaveOpen(false);
+                const formattedLeaveStart = parse(dtLeaveStart, 'MM/dd/yyyy', new Date());
+                const formattedLeaveEnd  = parse(dtLeaveEnd, 'MM/dd/yyyy', new Date());
+        
+                if(leaveClicked){
+                    if(isBefore(formattedLeaveEnd, formattedLeaveStart )){
+                        setShowBeforeDayAlert(true);
+                        setLeaveClicked(false);
+                    }
+                    if(isSameDay(formattedLeaveEnd, formattedLeaveStart )){
+                        setShowSameDayAlert(true);
+                        setLeaveClicked(false);
+                    }
+                    else{
+                        const payload = {
+                            empID: empID,
+                            date_started: `'${dtLeaveStart}'`,
+                            date_ended: `'${dtLeaveEnd}'`,
+                            reason: leaveReason
+                        }
+                        await Axios("http://localhost:8080/employee/leave", {
+                            method: "POST",
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
+                            },
+                            data: JSON.stringify(payload)
+                        }).then(function(response){
+                            console.log(response)
+                        })
+                        setShowBeforeDayAlert(false);
+                        setLeaveClicked(false);
+                        setLeaveOpen(false);
+                        handleClose();
+                    }
+                }
+            }catch(err){
+                console.log(err);
             }
         }
 
-        const formattedOvertimeStart = new Date(dtOvertimeStart);
-        const formattedOvertimeEnd  = new Date(dtOvertimeEnd);
+        const overtimeSend = async() =>{
 
-        const ifBeforeHour = isBefore(formattedOvertimeStart, formattedOvertimeEnd);
+            const formattedOvertimeStart = new Date(dtOvertimeStart);
+            const formattedOvertimeEnd  = new Date(dtOvertimeEnd);
+    
+            const ifBeforeHour = isBefore(formattedOvertimeStart, formattedOvertimeEnd);
+    
+            if(overtimeClicked){
+    
+                if(!ifBeforeHour){
+                    setShowIncorrectTimeAlert(true);
+                }
+                else{
+                    const overtimeStartFormat = format(new Date(formattedOvertimeStart), "MM/dd/yyyy HH:mm:ss a");
+                    const overtimeEndFormat = format(new Date(formattedOvertimeEnd), "MM/dd/yyyy HH:mm:ss a");
 
-        if(overtimeClicked){
-
-            if(!ifBeforeHour){
-                setShowIncorrectTimeAlert(true);
+                    const payload = {
+                        empID: empID,
+                        date_and_time_started: `'${overtimeStartFormat}'`,
+                        date_and_time_ended: `'${overtimeEndFormat}'`,
+                    }
+                    await Axios("http://localhost:8080/employee/overtime", {
+                        method: "POST",
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
+                        },
+                        data: JSON.stringify(payload)
+                    }).then(function (response) {
+                        console.log(response)
+                    })
+                    setShowIncorrectTimeAlert(false);
+                    setOvertimeOpen(false);
+                    handleClose();
+                }
+                setOvertimeClicked(false);
             }
-            else{
-                dispatch(setOvertimeDateStarted(format(formattedOvertimeStart, 'MM/dd/yyyy hh:mm:ss a')));
-                dispatch(setOvertimeDateEnded(format(formattedOvertimeEnd, 'MM/dd/yyyy hh:mm:ss a')));
-                dispatch(requestOvertime(id));
-                setShowIncorrectTimeAlert(false);
-                setOvertimeOpen(false);
-            }
-            setOvertimeClicked(false);
         }
-    }, [showBeforeDayAlert, showIncorrectTimeAlert, leaveClicked, overtimeClicked])
+
+        leaveSend();
+        overtimeSend();
+    }, [empData, showBeforeDayAlert, showIncorrectTimeAlert, leaveClicked, overtimeClicked])
 
     function handleLogout(event){
-        dispatch(logoutUser());
+        localStorage.removeItem("jwt");
+        localStorage.removeItem("role");
+        localStorage.removeItem("account");
+        localStorage.removeItem("empData");
         router.push('/login')
     }
 
     async function handleRedirectToProfile(event, value){
         await router.push({
-            pathname: '/employer/form',
-            query: {id: value},
+            pathname: '/prfile',
+            query: {id: empID},
         })
     }
 
@@ -173,7 +313,7 @@ export default function Employer() {
     }
 
     function checkData(){
-        console.log(leaves.leavesData);
+        console.log(empData)
     }
     
     
@@ -183,7 +323,7 @@ export default function Employer() {
         <Box maxWidth="md" sx={{mx:20, my:2}}>
             <Grid container direction='row' sx={{ border: 2, p:2, width:670 }} spacing={2}>
                 <Stack direction="row" spacing={50}>
-                    <Button variant="contained" value={logins.loginData.length > 0 ? parseInt(id) : <Box></Box>} onClick={(event) => handleRedirectToProfile(event.target.value)}>{logins.loginData.length > 0 ? logins.loginData[0].fullname : ''} </Button>
+                    <Button variant="contained" onClick={(event)=>handleRedirectToProfile()}>{accountData.fname+ " " + accountData.lname}</Button>
                     <Button variant="contained" onClick={(event) => handleLogout()}>Log out </Button>
                 </Stack>
 
@@ -196,7 +336,7 @@ export default function Employer() {
                 <Modal open={openLeave} onClose={handleClose} id='leave'>
                     <Box sx={style}>
                         <Typography sx={{ mx: 16 }}>Request Leave</Typography>
-                        
+
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                             <form onSubmit={handleRequestLeave}>
                                 <Stack direction="column" spacing={3}>
@@ -206,9 +346,15 @@ export default function Employer() {
                                             Invalid date! Date Start must be before Date End
                                         </Alert>
                                     </Collapse>
+                                    <Collapse in={showSameDayAlert}>
+                                        <Alert severity="error" visible="false">
+                                            <AlertTitle>Error</AlertTitle>
+                                            Invalid date! Date Start cannot be on the same day as Date End
+                                        </Alert>
+                                    </Collapse>
                                     <DatePicker required id='date-started' label='Date Start' renderInput={(params) => <TextField {...params} />} value={dtLeaveStart} onChange={(newDate) => setDTLeaveStart(format(new Date(newDate), 'MM/dd/yyyy'))} />
                                     <DatePicker required id='date-ended' label='Date End' renderInput={(params) => <TextField {...params} />} value={dtLeaveEnd} onChange={(newDate) => setDTLeaveEnd(format(new Date(newDate), 'MM/dd/yyyy'))} />
-                                    <TextField required variant="outlined" id='reason' label='Reason' value={leaves.reason} onChange={(event)=>dispatch(setLeaveReason(event.target.value))}></TextField>
+                                    <TextField required variant="outlined" id='reason' label='Reason' value={leaveReason} onChange={(event)=>setLeaveReason(event.target.value)}></TextField>
                                     <Button variant="contained" type="submit">Request Leave</Button>
                                 </Stack>
                             </form>
@@ -219,7 +365,7 @@ export default function Employer() {
                 <Modal open={openOvertime} onClose={handleClose} id='leave'>
                     <Box sx={style}>
                         <Typography sx={{ mx: 16 }}>Request Overtime</Typography>
-                        
+
                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                             <form onSubmit={handleRequestOvertime}>
                                 <Stack direction="column" spacing={3}>
@@ -237,18 +383,16 @@ export default function Employer() {
                         </LocalizationProvider>
                     </Box>
                 </Modal>
-                {/* <Grid item><Button variant="contained" value={logins.loginData.length > 0 ? logins.loginData[0].account_id : ''} onClick={(event) => handleRedirectToProfile(event.target.value)}>{logins.loginData.length > 0 ? logins.loginData[0].fullname : ''} </Button></Grid>
-                <Grid item><Button variant="contained" onClick={(event) => handleLogout()}>Log out </Button></Grid> */}
 
-                {logins.loginData.length>0?_.filter(employees.employeeData, ['account_id', parseInt(id)]).map((value, index) =>
+                {_.map(empData, (value, index) =>
                     <Box key={index} sx={{mt:2}}>
                         <Stack direction="row" spacing={2}>
                             <Typography textAlign="center" sx={{ bgcolor: deepOrange[300], width: 200, height: 100, p:4 }} style={{ color: deepPurple[800] }}>Leaves remaining: {value.total_leaves}</Typography>
-                            <Typography textAlign="center" sx={{ bgcolor: deepOrange[300], width: 200, height: 100, p:4 }} style={{ color: deepPurple[800] }}>Total Overtime: {value.total_overtime}</Typography>
+                            <Typography textAlign="center" sx={{ bgcolor: deepOrange[300], width: 200, height: 100, p:4 }} style={{ color: deepPurple[800] }}>Total Overtime: {value.total_overtimes}</Typography>
                             <Typography textAlign="center" sx={{ bgcolor: deepOrange[300], width: 200, height: 100, p:4 }} style={{ color: deepPurple[800] }}>Total Absences: {value.total_absences}</Typography>
                         </Stack>
                     </Box>
-                ): <Box></Box>}
+                )}
             </Grid>
 
             <Grid container justifyContent="center" direction="row" sx={{mt:2, p:2, border:2, width:670, ml:-2}}>
@@ -256,7 +400,7 @@ export default function Employer() {
                     <Grid container justifyContent="center" direction="row">
                         <Grid item><Typography>Leaves Table</Typography></Grid>
 
-                       
+
                                 <Table sx={{ border: 2 }}>
                                     <TableHead>
                                         <TableRow>
@@ -266,16 +410,13 @@ export default function Employer() {
                                         </TableRow>
                                     </TableHead>
                             <TableBody>
-                                {logins.loginData.length > 0 ? _.filter(employees.employeeData, ['account_id', parseInt(id)]).map((value) =>
-                                    _.map(value.leaves, (newvalue, index) =>
+                                {_.map(empData, (data, index)=> 
                                         <TableRow key={index}>
-                                            <TableCell>{newvalue.date_started}</TableCell>
-                                            <TableCell>{newvalue.date_ended}</TableCell>
-                                            <TableCell>{newvalue.reason}</TableCell>
+                                            <TableCell>{data.leaves.date_started}</TableCell>
+                                            <TableCell>{data.leaves.date_ended}</TableCell>
+                                            <TableCell>{data.leaves.reason}</TableCell>
                                         </TableRow>
-
-                                    )
-                                ) : <TableRow></TableRow>}
+                                )}
                             </TableBody>
                                 </Table>
 
@@ -292,15 +433,13 @@ export default function Employer() {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {logins.loginData.length > 0 ? _.filter(employees.employeeData, ['account_id', parseInt(logins.loginData[0].account_id)]).map((value) =>
-                                    _.map(value.absence, (newvalue, index) =>
+                                {_.map(empData, (data, index)=> 
                                         <TableRow key={index}>
-                                            <TableCell>{newvalue.date_started}</TableCell>
-                                            <TableCell>{newvalue.date_ended}</TableCell>
-                                            <TableCell>{newvalue.reason}</TableCell>
+                                            <TableCell>{data.absences.date_started}</TableCell>
+                                            <TableCell>{data.absences.date_ended}</TableCell>
+                                            <TableCell>{data.absences.reason}</TableCell>
                                         </TableRow>
-                                    )
-                                ) : <TableRow></TableRow>}
+                                )}
                             </TableBody>
                         </Table>
 
@@ -317,14 +456,12 @@ export default function Employer() {
                             </TableHead>
                             <TableBody>
 
-                                {logins.loginData.length > 0 ? _.filter(employees.employeeData, ['account_id', parseInt(logins.loginData[0].account_id)]).map((value) =>
-                                    _.map(value.overtime, (newvalue, index) =>
+                                {_.map(empData, (data, index)=>
                                         <TableRow key={index}>
-                                            <TableCell>{newvalue.date_and_time_started}</TableCell>
-                                            <TableCell>{newvalue.date_and_time_ended}</TableCell>
+                                            <TableCell>{data.overtimes.date_and_time_started}</TableCell>
+                                            <TableCell>{data.overtimes.date_and_time_ended}</TableCell>
                                         </TableRow>
-                                    )
-                                ) : <TableRow></TableRow>}
+                                    )}
                             </TableBody>
                         </Table>
 

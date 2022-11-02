@@ -38,6 +38,7 @@
     "dynamodb-converter": "^1.0.4",
     "jose": "^4.10.3",
     "lodash": "^4.17.21",
+    "randombytes": "^2.1.0",
     "uuid": "^9.0.0"
   }
 }

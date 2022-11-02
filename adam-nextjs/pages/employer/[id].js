@@ -3,14 +3,23 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';;
 import { useSelector, useDispatch } from 'react-redux';
 import { setAccountFullName, setAccountEmail, setAccountPassword, updateAccount, setAccountFirstName, setAccountLastName} from '../../store/reducers/account';
+import Axios from "axios";
 
 export default function UpdateProfile(props) {
-    const dispatch = useDispatch();
-    const employees = useSelector(state=>state.employee)
-    const logins = useSelector(state=>state.login);
-    const accounts = useSelector(state=>state.account)
+    const [accountData, setAccountData] = useState(JSON.parse(localStorage.getItem("account")));
+    const [fname, setFname] = useState('');
+    const [lname, setLname] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const accID = accountData.accID;
+    const role = accountData.role;
+    const [error, setError] = useState('');
+    // const dispatch = useDispatch();
+    // const employees = useSelector(state=>state.employee)
+    // const logins = useSelector(state=>state.login);
+    // const accounts = useSelector(state=>state.account)
     //Timeout for the notification
-    const [seconds, setSeconds] = useState(2);
+    const [seconds, setSeconds] = useState(5);
 
     //Get the id supplied by the router
     const router = useRouter();
@@ -24,12 +33,12 @@ export default function UpdateProfile(props) {
     //Show error message that the full name is already taken
     const [fullnamealert, setShowFullNameAlert] = useState(false);
 
+    const [errorAlert, setShowErrorAlert] = useState(false);
+
     //Show additional info
     const [info, setShowInfo] = useState(false);
 
     //Variable to hold the employee data
-    const [empData, setEmpData] = useState([]);
-
     // const [firstname, setFirstName] = useState('');
     // const [lastname, setLastName] = useState('');
     // const [email, setEmail] = useState('');
@@ -37,40 +46,76 @@ export default function UpdateProfile(props) {
 
     useEffect(() => {
 
-        if ((emailalert===true || fullnamealert===true) || info===true) {
+        if ((emailalert===true || fullnamealert===true) || errorAlert === true || info===true) {
             if (seconds > 0) {
                 setTimeout(() => setSeconds(seconds - 1), 1000);
             } else {
                 setShowEmailAlert(false);
                 setShowFullNameAlert(false);
+                setShowErrorAlert(false);
                 setShowInfo(false);
-                setSeconds(2);
+                setSeconds(5);
             }
         }
 
-        const filter = _.filter(accounts.accountData, function(value){
-            return value.account_id !== parseInt(router.query.id)
-        });
+        fname === "" ? setFname(accountData.fname) : "";
+        lname === "" ? setLname(accountData.lname) : "";
+        email === "" ? setEmail(accountData.email) : "";
+        password === "" ? setPassword(accountData.password) : "";
 
-        _.map(filter, (value, index)=>{
-            if (filter[index].email === accounts.email) {
-                setShowEmailAlert(true);
+        // const filter = _.filter(accounts.accountData, function(value){
+        //     return value.account_id !== parseInt(router.query.id)
+        // });
+
+        // _.map(filter, (value, index)=>{
+        //     if (filter[index].email === accounts.email) {
+        //         setShowEmailAlert(true);
+        //     }
+        //     if (filter[index].firstname + filter[index].lastname === accounts.firstname + accounts.lastname) {
+        //         setShowFullNameAlert(true);
+        //     }
+        // }) 
+
+    }, [emailalert, fullnamealert, errorAlert, info, seconds, accountData, seconds]);
+
+    async function updateEmployer(value) {
+        try{
+            const payload = {
+                fname: fname === "" ? accountData.fname : fname,
+                lname: lname === "" ? accountData.lname : lname,
+                email: email === "" ? accountData.email : email,
+                password: password === "" ? accountData.password : password,
+                role: role
             }
-            if (filter[index].firstname + filter[index].lastname === accounts.firstname + accounts.lastname) {
-                setShowFullNameAlert(true);
-            }
-        }) 
-
-    }, [emailalert, fullnamealert, info, seconds, accounts, employees, empData, seconds]);
-
-    function updateEmployer(value) {
-        if (!emailalert && !fullnamealert) {
-            dispatch(updateAccount(value));
+            const baseUrl = "http://localhost:8080/account/"
+            const finalUrl = baseUrl+accID;
+            await Axios(finalUrl, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
+                },
+                data: JSON.stringify(payload)
+            }).then(function(response){
+                console.log(JSON.stringify(response.data))
+                localStorage.setItem("account", JSON.stringify(response.data))
+            })
+            // await Axios(`"http://localhost:8080/account/${accID}"`, {
+            //     method: "GET",
+            //     headers: {
+            //         'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
+            //     }
+            // }).then(function (response) {
+            //     console.log(response)
+            // })
             setShowInfo(true);
+        }catch(err){
+            setError(JSON.stringify(err))
+            setShowErrorAlert(true);
+            console.log(err)
         }
     }
     function checkData(){
-        console.log(accounts.accountData)
+        console.log(accountData)
     }
 
     return (
@@ -93,24 +138,28 @@ export default function UpdateProfile(props) {
                         Another employer with the same full name already exists. Please use a different one!
                     </Alert>
                 </Collapse>
-                <Grid container alignItems="start" direction="column" sx={{ mt: 2, p: 2, border: 2, borderRadius: 2 }}>
-                    {_.filter(accounts.accountData, ['account_id', parseInt(router.query.id)]).map((data, index) => (
-                        <Box key={index}>
-                            <Grid item sx={{ mb: 2 }}>Update Employer Data</Grid>
-                            <Grid item>Employer ID: {data.account_id}</Grid>
+                <Collapse in={errorAlert}>
+                    <Alert severity="error" visible="false">
+                        <AlertTitle>Error</AlertTitle>
+                        Error: {error}
+                    </Alert>
+                </Collapse>
+            <Grid container alignItems="start" direction="column" sx={{ mt: 2, p: 2, border: 2, borderRadius: 2 }}>
+                <Box>
+                    <Grid item sx={{ mb: 2 }}>Update Employer Data</Grid>
+                    <Grid item>Employer ID: {accountData.accID}</Grid>
 
-                            <Grid container alignItems={"start"} direction="column" spacing={2} sx={{ mx: 1, mt: 2 }}>
+                    <Grid container alignItems={"start"} direction="column" spacing={2} sx={{ mx: 1, mt: 2 }}>
 
-                                <Grid item>First Name: <Input value={accounts.firstname} onChange={(event) => dispatch(setAccountFirstName(event.target.value))} sx={{ ml: 2, px: 2 }} placeholder={data.firstname}></Input></Grid>
-                                <Grid item>Last Name: <Input value={accounts.lastname} onChange={(event) => dispatch(setAccountLastName(event.target.value))} sx={{ ml: 2, px: 2 }} placeholder={data.lastname}></Input></Grid>
-                                <Grid item>Email: <Input value={accounts.email} onChange={(event) => dispatch(setAccountEmail(event.target.value))} sx={{ ml: 6, px: 2 }} placeholder={data.email}></Input></Grid>
-                                <Grid item>Password: <Input value={accounts.password} onChange={(event) => dispatch(setAccountPassword(event.target.value))} sx={{ ml: 2, px: 2 }} placeholder={data.password}></Input></Grid>
-                                <Button variant="contained" sx={{ mx: 25, mt: 2 }} value={data.account_id} onClick={(event)=>updateEmployer(event.target.value)}>Update</Button>
-                                <Button variant="contained" sx={{ mx: 25, mt: 2 }} onClick={(event)=>checkData()}>Check Data</Button>
-                            </Grid>
-                        </Box>
-                    ))}
-                </Grid>
+                        <Grid item>First Name: <Input required value={fname} onChange={(event) => setFname(event.target.value)} sx={{ ml: 2, px: 2 }} placeholder={accountData.fname}></Input></Grid>
+                        <Grid item>Last Name: <Input required value={lname} onChange={(event) => setLname(event.target.value)} sx={{ ml: 2, px: 2 }} placeholder={accountData.lname}></Input></Grid>
+                        <Grid item>Email: <Input required value={email} onChange={(event) => setEmail(event.target.value)} sx={{ ml: 6, px: 2 }} placeholder={accountData.email}></Input></Grid>
+                        <Grid item>Password: <Input required value={password} onChange={(event) => setPassword(event.target.value)} sx={{ ml: 2, px: 2 }} placeholder={accountData.password}></Input></Grid>
+                        <Button variant="contained" sx={{ mx: 25, mt: 2 }} value={accountData.accID} onClick={(event) => updateEmployer(event.target.value)}>Update</Button>
+                        <Button variant="contained" sx={{ mx: 25, mt: 2 }} onClick={(event) => checkData()}>Check Data</Button>
+                    </Grid>
+                </Box>
+            </Grid>
         </Container>
     )
 }

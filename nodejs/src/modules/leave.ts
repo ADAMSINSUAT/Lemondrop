@@ -60,7 +60,8 @@ export default class leave{
     }
     public async checkLeave(){
         try {
-            const result = await selectDB(this.__TABLE__, `date_started = '${this.data.date_started}' AND empID='${this.data.empID}'`)
+          const date_started = JSON.stringify(this.data.date_started).replace(/['"`]+/g, '');
+            const result = await selectDB(this.__TABLE__, `date_started = '${date_started}' AND empID='${this.data.empID}'`)
             if (result.length === 0){
                 return "Not found"
             }
@@ -113,8 +114,12 @@ export default class leave{
           date_ended: this.data.date_ended,
           reason: this.data.reason,
         }
-        empModel.data.leaves?.push(leaveArray);
-        await empModel.updateLeaves();
+        const check = _.find(empModel.data.leaves, ["lvID", leaveArray.lvID]);
+        
+        if(check === undefined){
+          empModel.data.leaves?.push(leaveArray);
+          await empModel.updateLeaves();
+        }
       }else{
         await empModel.getEmployee()
         const leaveArray = _.filter(empModel?.data.leaves, function(leave){

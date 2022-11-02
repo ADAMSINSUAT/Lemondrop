@@ -1,5 +1,5 @@
 // Import required AWS SDK clients and commands for Node.js
-import { CreateTableCommand } from "@aws-sdk/client-dynamodb";
+import { CreateTableCommand, DeleteTableCommand } from "@aws-sdk/client-dynamodb";
 import { client } from "../lib/client/dynamo";
 
 // Set the parameters
@@ -9,19 +9,11 @@ const params = {
       AttributeName: "accID", //ATTRIBUTE_NAME_2
       AttributeType: "S", //ATTRIBUTE_TYPE
     },
-    {
-      AttributeName: "fname", //ATTRIBUTE_NAME_2
-      AttributeType: "S", //ATTRIBUTE_TYPE
-    },
   ],
   KeySchema: [
     {
       AttributeName: "accID", //ATTRIBUTE_NAME_1
       KeyType: "HASH",
-    },
-    {
-      AttributeName: "fname", //ATTRIBUTE_NAME_1
-      KeyType: "RANGE",
     },
   ],
   ProvisionedThroughput: {

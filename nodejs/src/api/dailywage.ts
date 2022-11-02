@@ -12,13 +12,13 @@ export const dailywageRequest = async (req: IncomingMessage) => {
     try {
 
         switch (req.method) {
-            default:
+            case "POST":
                 if (pathParam.id !== undefined) {
                     const getModel = new employee(pathParam.id);
                     if (await getModel.getEmployee() === "Not found") {
                         return "Employee ID does not exist"
                     }else{
-                        return "Daily wage: " + await getModel.computeDailyWage();
+                        return await getModel.computeDailyWage();
                     }
                 }
                 else{
@@ -29,5 +29,4 @@ export const dailywageRequest = async (req: IncomingMessage) => {
     catch (err: any) {
         throw new Error(err);
     }
-    return 'yes'
 }

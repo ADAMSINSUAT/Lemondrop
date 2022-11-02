@@ -1,4 +1,6 @@
 import * as jose from 'jose'
+import _ from 'lodash'
+import { loginRequest } from './api/login'
 
 // openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout privatekey.key -out certificate.crt
 const generatePublicKey = async() => {
@@ -65,14 +67,16 @@ const generatePrivateKey = async() => {
 }
 // 
 
+export const tokenArr:string[] = [];
+
 const secretKey = new TextEncoder().encode(
   "Swe4g7c?UBm5Nrd96vhsVDtkyJFbqKMTm!TMw5BDRLtaCFAXNvbq?s4rGKQSZnUP"
 )
 
 
-const encrypt =async () => {
+export const encrypt = async(payload:any) => {
   const ebPrivateKey = await generatePrivateKey()
-  const jwt = await new jose.SignJWT({ 'urn:example:claim': true, 'sub': JSON.stringify( {'name': 'Marie'}) })
+  const jwt = await new jose.SignJWT({ 'sub': payload })
   .setProtectedHeader({ alg: 'RS256', typ: 'jwt' })
   .setIssuedAt()
   .setIssuer('lemodrop')
@@ -82,31 +86,41 @@ const encrypt =async () => {
   .sign(ebPrivateKey)
   // HS256
   // .sign(secretKey)
-
   return  jwt
 
 }
 
-const verify = async (token: string) => {
-  //RS256
-  const publicKey = await generatePublicKey()
-  //HS256
-  // const publicKey = secretKey
-  const { payload, protectedHeader } = await jose.jwtVerify(token, publicKey, {
-    issuer: 'lemodrop',
-    audience: 'lemodrop',
-  })
-  
-  console.log(protectedHeader)
-  console.log(payload)
-  
+export const verify = async (token: any) => {
+  try {
+    //RS256
+    const publicKey = await generatePublicKey()
+    //HS256
+    // const publicKey = secretKey
+
+    const { payload, protectedHeader } = await jose.jwtVerify(token, publicKey, {
+      issuer: 'lemodrop',
+      audience: 'lemodrop',
+    })
+    return true
+  } catch (err) {
+    return err
+  }
 }
 
-const main =async () => {
-  const token = await encrypt()
-  console.log(token)
+export const main = async (payload:any) => {
+  const token = await encrypt(payload)
 
   verify(token)
 }
 
-main()
+const token = "eyJhbGciOiJSUzI1NiIsInR5cCI6Imp3dCJ9.eyJzdWIiOnsiZm5hbWUiOiJBZGFtIEtlaXp6ZXIiLCJhY2NJRCI6ImNlMjYyZmZiLWY0NmUtNGFmMC05OTBlLTc5Yjk4NThmNGMzYiIsImxuYW1lIjoiU2luc3VhdCIsInBhc3N3b3JkIjoiYWRhbTEyMyIsInJvbGUiOiJFbXBsb3llZSIsImVtYWlsIjoiYWRhbXNpbnN1YXRAZ21haWwuY29tIn0sImlhdCI6MTY2NjkyMTY1NCwiaXNzIjoibGVtb2Ryb3AiLCJhdWQiOiJsZW1vZHJvcCIsImV4cCI6MTY2NjkyODg1NH0.umE1YVBacsPcMaX7oZreeWf4X2ZDCOV6TcKQgNRI7cNKshhoPAYDrqMglJMAj6I1DZxbTu2IFpMN82aF_jXb5Y1ey-OIHgzrDYSgi_rHl41XHtWQWVncaqqEYcX2k0_aj1Vv5BYSeLVR98YMmR9CVp611OdzYshMKAXl9MB8Thwbce_6KgGucL-FXN8APlz0ldNZRsWjufKAMqfJUh9hUjRPVZIO3fKKd7p90cIzJni-c9jLQd2hhrhcM1c9dXnHUHRvW4OmQXvsDpp0Mq17OzVG9u1RIl5ZhS_Pq79Gr2inCxGv-2b5zt50kPGLlQ1Vmkw3MkabeApUTBY-xjmFaw"
+verify(token)
+// const payload = {
+//   fname: 'Adam Keizzer',
+//   accID: 'ce262ffb-f46e-4af0-990e-79b9858f4c3b',
+//   lname: 'Sinsuat',
+//   password: 'adam123',
+//   role: 'Employee',
+//   email: 'adamsinsuat@gmail.com'
+// }
+// main(payload)

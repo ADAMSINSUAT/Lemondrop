@@ -58,7 +58,8 @@ export default class overtime{
     }
     public async checkOvertime(){
         try {
-            const result = await selectDB(this.__TABLE__, `empID = '${this.data.empID}' AND date_and_time_started = '${this.data.date_and_time_started}'`)
+          const date_and_time_started = JSON.stringify(this.data.date_and_time_started).replace(/['"`]+/g, '');
+            const result = await selectDB(this.__TABLE__, `empID = '${this.data.empID}' AND date_and_time_started = '${date_and_time_started}'`)
             if (result.length === 0){
                 return "Not found"
             }
@@ -109,8 +110,11 @@ export default class overtime{
                     date_and_time_started: this.data.date_and_time_started,
                     date_and_time_ended: this.data.date_and_time_ended,
                 }
-                empModel.data.overtimes?.push(overtimeArray);
-                await empModel.updateOvertimes();
+                const check = _.find(empModel.data.overtimes, ["ovtID", overtimeArray.ovtID]);
+                if(check === undefined){
+                  empModel.data.overtimes?.push(overtimeArray);
+                  await empModel.updateOvertimes();
+                }
             }else{
               await empModel.get();
               const overtimeArray = _.filter(empModel?.data.overtimes, function(overtime){

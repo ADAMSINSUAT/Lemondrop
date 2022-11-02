@@ -43,7 +43,8 @@ export default class absence{
     }
     public async getAbsence(){
         try {
-            const result = await selectDB(this.__TABLE__, `absID = '${this.absID}'`)
+          const absID = this.absID.replace(/['"`]+/g, '');
+            const result = await selectDB(this.__TABLE__, `absID = '${absID}'`)
             if (result.length === 0){
                 return "Not found";
             }
@@ -57,7 +58,8 @@ export default class absence{
     }
     public async checkAbsence(){
         try {
-            const result = await selectDB(this.__TABLE__, `empID = '${this.data.empID}' AND date_started = '${this.data.date_started}'`)
+          const date_started = JSON.stringify(this.data.date_started).replace(/['"`]+/g, '');
+            const result = await selectDB(this.__TABLE__, `empID = '${this.data.empID}' AND date_started = '${date_started}'`)
             if (result.length === 0){
                 return "Not found"
             }

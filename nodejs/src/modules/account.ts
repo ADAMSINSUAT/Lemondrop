@@ -78,11 +78,9 @@ export default class account{
           const result = await selectDB(this.__TABLE__, `email = '${email}'`)
           if (result.length === 0) {
             return 'Not Found'
-            //throw new Error("Not found");
           }
           else {
             this.data = {...this.data, ...result[0]}
-            return 'Found'
           }
         } catch (err){
           console.error(err)
@@ -101,33 +99,27 @@ export default class account{
             this.data.role,
         ]
         try {
+          const adModel = new admin(this.accID);
           if (this.data.role === "Admin") {
-            const adModel = new admin(this.accID);
             if (await adModel.get() === 'No Admin') {
               adModel.insert();
-              await insertDB(this.__TABLE__, stringFormat, params);
+            }else{
+              return "Admin already exists!"
             }
-            else {
-              return 'Admin already exists!'
-            }
-          } else {
-            await insertDB(this.__TABLE__, stringFormat, params)
           }
-          } catch (err){
-            console.error(err)
-            throw new Error("Unable to save");
-          }
+          await insertDB(this.__TABLE__, stringFormat, params)
+        } catch (err) {
+          console.error(err)
+          throw new Error("Unable to save");
+        }
     }
     public async update() {
         const updateFormat = JSON.parse(JSON.stringify(this.data));
         delete updateFormat.accID;
-        delete updateFormat.fname;
-        delete updateFormat.lname;
-        delete updateFormat.role;
         const fields = keys(updateFormat)
         const newValues = values(updateFormat)
         const updateStatement = map(fields, (field) => `${field} = ? `)
-        const where = `accID='${this.data.accID}' AND fname='${this.data.fname}'`
+        const where = `accID='${this.data.accID}'`
         try {
             await updateDB(this.__TABLE__, updateStatement.join(), newValues, where)
         } catch (err) {

@@ -9,7 +9,8 @@ export const execute = async (params :any) =>{
     return valuesResponse;
   } catch (err) {
     console.error(err);
-    throw new Error("Unable to save");
+    return new Error(error);
+    //throw new Error("Unable to save");
   }
 }
 

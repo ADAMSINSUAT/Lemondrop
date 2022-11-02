@@ -13,7 +13,7 @@ export const monthlyWageRequest = async (req: IncomingMessage) => {
     try {
 
         switch (req.method) {
-            default:
+            case "POST":
                 if (pathParam.id !== undefined) {
                     const getModel = new employee(pathParam.id);
                     const getMonth = await getJSONDataFromRequestStream(req) as {month: string};
@@ -25,7 +25,7 @@ export const monthlyWageRequest = async (req: IncomingMessage) => {
                         } else {
                             const compModel = new company(await getModel.data.compID);
                             if(await compModel.getCompany()!=="Not found"){
-                                return "Monthly wage: " + await getModel.computeMonthlySalary(getMonth.month, compModel.data.allowLeaves, compModel.data.allowOT);
+                                return await getModel.computeMonthlySalary(getMonth.month, compModel.data.allowLeaves, compModel.data.allowOT);
                             }else{
                                 return "Company no longer exists!"
                             }
@@ -40,5 +40,4 @@ export const monthlyWageRequest = async (req: IncomingMessage) => {
     catch (err: any) {
         throw new Error(err);
     }
-    return 'yes'
 }

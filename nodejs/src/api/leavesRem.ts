@@ -13,11 +13,10 @@ export const leavesRemRequest = async (req: IncomingMessage) => {
     try {
 
         switch (req.method) {
-            default:
+            case 'POST':
                 if (pathParam.id !== undefined) {
                     const getModel = new employee(pathParam.id);
                     const getMonth = await getJSONDataFromRequestStream(req) as {month: string};
-                    console.log(await getModel.getEmployee())
                     if (await getModel.getEmployee() === "Not found") {
                         return "Employee ID does not exist"
                     }else{
@@ -26,12 +25,14 @@ export const leavesRemRequest = async (req: IncomingMessage) => {
                         }else{
                             const compModel = new company(await getModel.data.compID);
                             if(await compModel.getCompany() !== "Not found"){
-                                return "Remaining Leaves: "+ await getModel.computeRemLeaves(getMonth.month, compModel.data.allowLeaves);
-                            }else{
+                                return await getModel.computeRemLeaves(getMonth.month, compModel.data.allowLeaves);
+                            }
+                            else{
                                 return "Company no longer exists!"
                             }
                         }
                     }
+                    return "Successful"
                 }
                 else{
                     return "Employee ID need to be entered"

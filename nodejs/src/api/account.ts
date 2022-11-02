@@ -15,28 +15,51 @@ export const accountRequest = async (req: IncomingMessage) => {
         switch (req.method) {
             case 'POST':
                 const postresult = await getJSONDataFromRequestStream(req) as { fname: string, lname: string, email: string, password: string, role: string}
-                console.log(postresult)
                 const postmodel = new account(postresult);
-                if(await postmodel.getName(postresult.fname, postresult.lname) === "Found" || await postmodel.getEmail(postresult.email) === "Found"){
+                if(await postmodel.getName(postresult.fname, postresult.lname) === "Found" || await postmodel.getEmail(postresult.email) !== "Not Found"){
                     return 'An account with the same name or email already exists!'
                 }
                 else{
-                    if(await postmodel.insert()==='Admin already exists!'){
-                        return 'Admin already exists!'
-                    }else{
-                        await postmodel.insert();
-                        return 'Successfully saved';
-                    }
+                    return await postmodel.insert() === "Admin already exists!" ? "Admin already exists!" : "Successfully saved"
                 }
-                return 'Save successfully'
             case 'PUT':
                 if(pathParam.id !== undefined){
                     const putresult = await getJSONDataFromRequestStream(req) as { fname: string, lname: string, email: string, password: string, role: string}
                     const putmodel = new account(pathParam.id);
-                    if(await putmodel.getAccount() !== "Not found"){
-                        putmodel.data = { ...putmodel.data, ...putresult };
-                        await putmodel.update();
-                        return 'Successfully updated';
+                    const accountModel = await selectDB("Account");
+                    let fullNameChck = false;
+                    let emailChck = false;
+                    let adminChck = false;
+                    if (await putmodel.getAccount() !== "Not found") {
+                        const accountFilter = _.filter(accountModel, function (value) {
+                            return value.accID !== pathParam.id;
+                        })
+                        _.map(accountFilter, (value, index) => {
+                            if (accountFilter[index].fname.toString() + accountFilter[index].lname.toString() === putresult.fname + putresult.lname) {
+                                fullNameChck = true;
+                            }
+                            if(accountFilter[index].email.toString() === putresult.email){
+                                emailChck = true;
+                            }
+                            if(accountFilter[index].role === "Admin" && putresult.role === "Admin"){
+                                adminChck = true;
+                            }
+                        })
+                        if(fullNameChck){
+                            return "Fullname is already registered!"
+                        }else if(emailChck){
+                            return "Email is already being used!"
+                        }else if(fullNameChck && emailChck){
+                            return "Email and fullname is already being used!"
+                        }else if(adminChck){
+                            return "An admin already exists!"
+                        }
+                        else{
+                            putmodel.data = { ...putmodel.data, ...putresult };
+                            await putmodel.update();
+                            return putmodel.data
+                            //return "Successfully updated"
+                        }
                     }else{
                         return "Account ID not found"
                     }
