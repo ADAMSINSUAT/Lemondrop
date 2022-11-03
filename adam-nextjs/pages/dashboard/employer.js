@@ -635,6 +635,7 @@ export default function Employer() {
                                     <TableCell align="center">Last Name</TableCell>
                                     <TableCell align="center">Email</TableCell>
                                     <TableCell align="center">Password</TableCell>
+                                    <TableCell align="center">Employment Type</TableCell>
                                     <TableCell align="center">Hourly Salary</TableCell>
                                     <TableCell align="center">Remaining Leaves</TableCell>
                                     <TableCell align="center">Total Absents</TableCell>
@@ -656,6 +657,7 @@ export default function Employer() {
                                         <TableCell align="center" color='#f9faa33'>{row.lname}</TableCell>
                                         <TableCell align="center">{row.email}</TableCell>
                                         <TableCell align="center">{row.password}</TableCell>
+                                        <TableCell align="center">{row.empType}</TableCell>
                                         <TableCell align="center">{row.hourlySalary}</TableCell>
                                         <TableCell align="center">{row.total_leaves}</TableCell>
                                         <TableCell align="center">{row.total_absences}</TableCell>

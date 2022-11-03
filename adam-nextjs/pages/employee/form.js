@@ -124,6 +124,7 @@ export default function AddEmployee() {
         event.preventDefault();
         let accountData;
         let employeeData;
+        let newaccountData;
 
         try{
             let profPayload = {
@@ -156,28 +157,31 @@ export default function AddEmployee() {
                         'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
                     }
                 }).then(function (response) {
-                    accountData = _.filter(response.data, (data) => data.role === "Employee");
+                    accountData = _.filter(response.data, (data) => data.role === "Employee")
+                    newaccountData = _.filter(response.data, (data) => data.fname + data.lname === fname + lname);
                 }).then(() => {
-                    const accountIndex = accountData.length - 1;
-                    _.map(accountData,  async (data, index) => {
+                    _.map(newaccountData, async(data) => {
+
                         let empPayload = {
                             hourlySalary: hourlySalary,
                             empType: role,
-                            accID: await accountData[accountIndex].accID,
+                            accID: data.accID,
                             compID: compID
                         };
+
+
 
                         await Axios("http://localhost:8080/employee/", {
                             method: "POST",
                             headers: {
                                 'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
                             },
-                            data: JSON.stringify(empPayload)
+                            data: await JSON.stringify(empPayload)
                         }).then(function (empResponse) {
-                            if(empResponse.data === "That account ID is already registered as an employee"){
+                            if (empResponse.data === "That account ID is already registered as an employee") {
                                 setError("Employee is already registered!");
                                 setShowErrorAlert(true);
-                            }else{
+                            } else {
                                 setShowAccountAlert(false);
                                 setShowInfo(true);
                                 setFname('');
@@ -193,12 +197,12 @@ export default function AddEmployee() {
                                 headers: {
                                     'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
                                 }
-                            }).then(function(response){
+                            }).then(function (response) {
                                 employeeData = response.data;
 
                                 const merged = _(employeeData).keyBy('accID').merge(_.keyBy(accountData, 'accID')).values().value();
-                                console.log(employeeData, accountData);
-                                console.log(merged);
+                                // console.log(employeeData, accountData);
+                                // console.log(merged);
                                 localStorage.setItem("employees", JSON.stringify(merged));
                             })
                         })
@@ -206,8 +210,9 @@ export default function AddEmployee() {
                 })
             })
         }catch(err){
-            setError(error);
-            setShowErrorAlert(true);
+            console.log(err)
+            // setError(err);
+            // setShowErrorAlert(true);
         }
         //setAddEmployeeClicked(true);
     }
@@ -256,7 +261,7 @@ export default function AddEmployee() {
                     <Grid item>Enter Last Name: <Input required value={lname} onChange={(event) => setLname(event.target.value)} sx={{ ml: 4 }}></Input></Grid>
                     <Grid item>Enter Email: <Input required value={email} onChange={(event) => setEmail(event.target.value)} sx={{ ml: 9 }}></Input></Grid>
                     <Grid item>Enter Password: <Input required type="password" value={password} onChange={(event) => setPassword(event.target.value)} sx={{ ml: 5 }}></Input></Grid>
-                    <Grid item>Enter Hourly Salary: <Input required value={hourlySalary} onChange={(event) => setHourlySalary(event.target.value)} sx={{ ml: 2 }}></Input></Grid>
+                    <Grid item>Enter Hourly Salary: <Input type='number' required value={hourlySalary} onChange={(event) => setHourlySalary(event.target.value)} sx={{ ml: 2 }}></Input></Grid>
                     <Grid item>Select Employment Type:</Grid>
                     <Select required value={role} onChange={(event) => setRole(event.target.value)}>
                         {_.map(employment_type, (value, index) =>

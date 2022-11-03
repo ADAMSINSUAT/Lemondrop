@@ -14,45 +14,45 @@ export default function Admin() {
 
     const accountData = JSON.parse(localStorage.getItem("account"));
 
-    const employerData = async() =>{
-        let empAccData;
-        let employerData;
+    // const employerData = async() =>{
+    //     let empAccData;
+    //     let employerData;
 
-        await Axios("http://localhost:8080/employer/", {
-            method: "GET",
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
-            },
-        }).then(function(response){
-            employerData = response.data;
-        }).then(async () => {
-            await Axios("http://localhost:8080/account/", {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
-                },
-            }).then(function(employer){
-                empAccData = _.filter(employer.data, (data)=>data.role === "Employer");
-                const merged = _(employerData).keyBy('accID').merge(_.keyBy(empAccData, 'accID')).values().value();
+    //     await Axios("http://localhost:8080/employer/", {
+    //         method: "GET",
+    //         headers: {
+    //             'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
+    //         },
+    //     }).then(function(response){
+    //         employerData = response.data;
+    //     }).then(async () => {
+    //         await Axios("http://localhost:8080/account/", {
+    //             method: "GET",
+    //             headers: {
+    //                 'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
+    //             },
+    //         }).then(function(employer){
+    //             empAccData = _.filter(employer.data, (data)=>data.role === "Employer");
+    //             const merged = _(employerData).keyBy('accID').merge(_.keyBy(empAccData, 'accID')).values().value();
 
-                localStorage.setItem("employers", JSON.stringify(merged));
-            })
-        })
-    }
+    //             localStorage.setItem("employers", JSON.stringify(merged));
+    //         })
+    //     })
+    // }
 
-    const companyData =async()=>{
-        await Axios("http://localhost:8080/company/", {
-            method: "GET",
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
-            },
-        }).then(function(response){
-            localStorage.setItem("companies", JSON.stringify(response.data));
-        })
-    }
+    // const companyData =async()=>{
+    //     await Axios("http://localhost:8080/company/", {
+    //         method: "GET",
+    //         headers: {
+    //             'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
+    //         },
+    //     }).then(function(response){
+    //         localStorage.setItem("companies", JSON.stringify(response.data));
+    //     })
+    // }
 
-    employerData();
-    companyData();
+    // employerData();
+    // companyData();
 
     const [employersData, setEmployerData] = useState(JSON.parse(localStorage.getItem("employers")));
 
@@ -61,7 +61,7 @@ export default function Admin() {
     // const companies = useSelector(state => state.company);
     // const accounts = useSelector(state => state.account);
     // const logins = useSelector(state=>state.login);
-    const dispatch = useDispatch();
+    //const dispatch = useDispatch();
 
     //const companyArr = [];
     // const accountArr = [];
@@ -132,8 +132,13 @@ export default function Admin() {
     }
 
     function handleLogout(event){
-        dispatch(logoutUser());
-        router.push('/login')
+        //dispatch(logoutUser());
+        localStorage.removeItem("role");
+        localStorage.removeItem("jwt");
+        localStorage.removeItem("account");
+        localStorage.removeItem("employers");
+        localStorage.removeItem("company");
+        router.push('/login');
     }
 
     async function handleRedirectToProfile(event){

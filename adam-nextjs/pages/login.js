@@ -107,6 +107,8 @@ export default function Login() {
                     })
                 }
                 if (localStorage.getItem("role") === 'Admin') {
+                    localStorage.setItem("employers", JSON.stringify(request.data.details.employerData));
+                    localStorage.setItem("company", JSON.stringify(request.data.details.companyData));
                     await router.push({
                         pathname: '/dashboard/',
                         query: { role: localStorage.getItem("role") }

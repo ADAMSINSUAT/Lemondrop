@@ -84,12 +84,23 @@ export const loginRequest = async (req: IncomingMessage) =>{
                         adminID = data.adminID
                     })
 
+                    const employerData = await selectDB("Employer");
+                    const empAccData = await selectDB("Account", `role = 'Employer'`)
+                    
+                    const merged =_(employerData).keyBy('accID').merge(_.keyBy(empAccData, 'accID')).values().value();
+
+                    //console.log(merged);
+
+                    const companyData = await selectDB("Company");
+
                     const token = await jwt.encrypt(accountData)
                     payload = {
                         token: token,
                         details: {
                             adminID: adminID,
                             accountData: accountData,
+                            employerData: merged,
+                            companyData: companyData
                         }
                     }
                 }

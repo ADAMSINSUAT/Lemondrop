@@ -19,7 +19,7 @@ export default function AddEmployer() {
     const [addInfo, setAddInfo] = useState('')
     const [info, setShowInfo] = useState(false);
 
-    const [company, setCompany] = useState(JSON.parse(localStorage.getItem("companies")));
+    const [company, setCompany] = useState(JSON.parse(localStorage.getItem("company")));
 
     const [compID, setCompID] = useState('');
     //const [compID, setCompID]
@@ -85,7 +85,7 @@ export default function AddEmployer() {
         event.preventDefault();
         let accountData;
         let employeeData;
-
+        let insertAccount;
 
         try{
             let profPayload = {
@@ -109,16 +109,15 @@ export default function AddEmployer() {
                         'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
                     }
                 }).then(function (response) {
-                    accountData = _.filter(response.data, (data) => data.role === "Employer" && (data.fname + data.lname === fname + lname));
+                    accountData = _.filter(response.data, (data)=>data.role === "Employer")
+                    insertAccount = _.filter(response.data, (data) => data.fname + data.lname === fname + lname);
                 }).then(() => {
-                    _.map(accountData,  async (data, index) => {
-                        // const insertAccount = _.filter(accountData, (data)=>data.fname + data.lname === fname + lname)
+                    _.map(insertAccount,  async (data) => {
                         let empPayload = {
-                            accID: accountData.accID,
+                            accID: data.accID,
                             compID: compID
                         };
 
-                        console.log(empPayload)
                         await Axios("http://localhost:8080/employer/", {
                             method: "POST",
                             headers: {
@@ -198,12 +197,11 @@ export default function AddEmployer() {
                     </Alert>
                 </Collapse> */}
                 <Grid container alignItems="center" direction="column" sx={{ mt: 2, p: 2, border: 2 }} maxWidth="md" spacing={2}>
-                    <Typography>Add Employee Form</Typography>
+                    <Typography>Add Employer Form</Typography>
                     <Grid item>Enter First Name: <Input required value={fname} onChange={(event) => setFname(event.target.value)} sx={{ ml: 4 }} ></Input></Grid>
                     <Grid item>Enter Last Name: <Input required value={lname} onChange={(event) => setLname(event.target.value)} sx={{ ml: 4 }}></Input></Grid>
                     <Grid item>Enter Email: <Input required value={email} onChange={(event) => setEmail(event.target.value)} sx={{ ml: 9 }}></Input></Grid>
                     <Grid item>Enter Password: <Input required type="password" value={password} onChange={(event) => setPassword(event.target.value)} sx={{ ml: 5 }}></Input></Grid>
-                    <Grid item>Enter Hourly Salary: <Input required value={hourlySalary} onChange={(event) => setHourlySalary(event.target.value)} sx={{ ml: 2 }}></Input></Grid>
                     <Grid item>Select Company: </Grid>
                     <Select required value={compID} onChange={(event) => setCompID(event.target.value)}>
                         {_.map(company, (value, index) =>
